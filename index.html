@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoachPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222222;
+    --border: rgba(255,255,255,0.08); --accent: #c8f65d; --accent2: #ff6b35;
+    --text: #f0f0f0; --muted: #888;
+    --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  .app { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px; min-height: 100vh; background: var(--surface);
+    border-right: 1px solid var(--border); padding: 24px 0; flex-shrink: 0;
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh;
+  }
+  .logo { padding: 0 20px 28px; font-family: var(--font-head); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    cursor: pointer; transition: all 0.2s; font-size: 14px; color: var(--muted);
+    font-weight: 500; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(200,246,93,0.06); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-footer { margin-top: auto; padding: 20px; }
+  .coach-badge { background: var(--surface2); border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .coach-avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-weight: 800; color: #0f0f0f; font-size: 13px;
+  }
+  .coach-name { font-size: 13px; font-weight: 500; }
+  .coach-role { font-size: 11px; color: var(--muted); }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; margin-left: 220px; }
+  .page { display: none; padding: 32px; animation: fadeIn 0.25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-family: var(--font-head); font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: rgba(255,255,255,0.18); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-family: var(--font-head); font-size: 28px; font-weight: 800; }
+  .stat-value.green { color: var(--accent); }
+  .stat-value.orange { color: var(--accent2); }
+
+  /* CLIENTS */
+  .section-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .client-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.2s; }
+  .client-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,246,93,0.08); }
+  .client-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 15px; flex-shrink: 0; }
+  .client-name { font-weight: 600; font-size: 14px; }
+  .client-goal { font-size: 12px; color: var(--muted); }
+  .client-metrics { display: flex; gap: 12px; }
+  .metric { flex: 1; background: var(--surface2); border-radius: 8px; padding: 8px 10px; }
+  .metric-val { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+  .metric-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .tag { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-top: 10px; }
+  .tag-green { background: rgba(200,246,93,0.15); color: var(--accent); }
+  .tag-orange { background: rgba(255,107,53,0.15); color: var(--accent2); }
+  .tag-blue { background: rgba(100,180,255,0.15); color: #64b4ff; }
+
+  /* BUTTONS */
+  .btn { padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #0f0f0f; }
+  .btn-primary:hover { background: #d4f870; transform: translateY(-1px); }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.2); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 800; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .close-btn { cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 90px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* CLIENT DETAIL */
+  .detail-header { display: flex; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+  .detail-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 20px; }
+  .detail-name { font-family: var(--font-head); font-size: 20px; font-weight: 800; }
+  .detail-info { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); }
+  .tab { padding: 8px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.2s; }
+  .tab.active { background: var(--surface2); color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* MESURES */
+  .mesures-table { width: 100%; border-collapse: collapse; }
+  .mesures-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  .mesures-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .mesures-table tr:last-child td { border-bottom: none; }
+  .delta { font-size: 12px; padding: 2px 7px; border-radius: 20px; }
+  .delta-up { background: rgba(200,246,93,0.15); color: var(--accent); }
+  .delta-down { background: rgba(255,107,53,0.15); color: var(--accent2); }
+
+  /* PROGRAMME */
+  .prog-day { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .prog-day-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .prog-day-name { font-family: var(--font-head); font-size: 14px; font-weight: 700; }
+  .prog-day-sub { font-size: 12px; color: var(--muted); }
+  .prog-exos { padding: 0 18px 14px; display: none; }
+  .prog-day.open .prog-exos { display: block; }
+  .exo-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .exo-row:last-child { border-bottom: none; }
+  .exo-num { width: 26px; height: 26px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+  .exo-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .exo-detail { font-size: 12px; color: var(--muted); }
+
+  /* NUTRITION */
+  .repas-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+  .repas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .repas-name { font-family: var(--font-head); font-size: 14px; font-weight: 700; }
+  .repas-cal { font-size: 12px; color: var(--accent); background: rgba(200,246,93,0.12); padding: 3px 8px; border-radius: 20px; }
+  .aliment-list { list-style: none; }
+  .aliment-list li { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px dashed var(--border); }
+  .aliment-list li:last-child { border-bottom: none; }
+  .aliment-qty { color: var(--muted); }
+
+  /* MISC */
+  .back-btn { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 20px; transition: color 0.2s; width: fit-content; }
+  .back-btn:hover { color: var(--text); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 60px; }
+    .sidebar .logo, .sidebar .coach-name, .sidebar .coach-role, .nav-item span:last-child { display: none; }
+    .main { margin-left: 60px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="sidebar">
+  <div class="logo">COACH<span>PRO</span></div>
+  <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">⊞</span> <span>Dashboard</span></div>
+  <div class="nav-item" onclick="showPage('clients')"><span class="nav-icon">◎</span> <span>Clients</span></div>
+  <div class="nav-item" onclick="showPage('programmes')"><span class="nav-icon">◈</span> <span>Programmes</span></div>
+  <div class="nav-item" onclick="showPage('nutrition')"><span class="nav-icon">◇</span> <span>Nutrition</span></div>
+  <div class="sidebar-footer">
+    <div class="coach-badge">
+      <div class="coach-avatar">TK</div>
+      <div><div class="coach-name">Ton Nom</div><div class="coach-role">Coach sportif</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div class="page-title">Bonjour 👋</div>
+      <div class="page-sub">Voici un résumé de tes clients</div>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">Clients actifs</div><div class="stat-value green" id="stat-clients">0</div></div>
+      <div class="stat-card"><div class="stat-label">Programmes créés</div><div class="stat-value" id="stat-programmes">0</div></div>
+      <div class="stat-card"><div class="stat-label">Plans nutrition</div><div class="stat-value orange" id="stat-nutrition">0</div></div>
+      <div class="stat-card"><div class="stat-label">Mesures totales</div><div class="stat-value" id="stat-mesures">0</div></div>
+    </div>
+    <div class="section-title">Clients récents</div>
+    <div class="clients-grid" id="dashboard-clients"></div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div class="page" id="page-clients">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div><div class="page-title">Clients</div><div class="page-sub">Gère tous tes clients</div></div>
+      <button class="btn btn-primary" onclick="openModal('add-client')">+ Nouveau client</button>
+    </div>
+    <div class="clients-grid" id="clients-list"></div>
+  </div>
+
+  <!-- CLIENT DETAIL -->
+  <div class="page" id="page-client-detail">
+    <div class="back-btn" onclick="showPage('clients')">← Retour aux clients</div>
+    <div class="detail-header" id="detail-header"></div>
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('mesures')">📏 Mesures</div>
+      <div class="tab" onclick="showTab('programme')">💪 Programme</div>
+      <div class="tab" onclick="showTab('nutrition')">🥗 Nutrition</div>
+    </div>
+    <div class="tab-content active" id="tab-mesures">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="openModal('add-mesure')">+ Ajouter mesure</button>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <table class="mesures-table">
+          <thead><tr><th>Date</th><th>Poids</th><th>Tour taille</th><th>Tour hanches</th><th>Masse grasse</th><th>Évolution</th></tr></thead>
+          <tbody id="mesures-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-programme">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="openModal('add-programme')">+ Ajouter programme</button>
+      </div>
+      <div id="programme-content"></div>
+    </div>
+    <div class="tab-content" id="tab-nutrition">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="openModal('add-nutrition')">+ Ajouter plan</button>
+      </div>
+      <div id="nutrition-content"></div>
+    </div>
+  </div>
+
+  <!-- PROGRAMMES -->
+  <div class="page" id="page-programmes">
+    <div class="page-header"><div class="page-title">Programmes</div><div class="page-sub">Tous les programmes sportifs</div></div>
+    <div id="all-programmes"></div>
+  </div>
+
+  <!-- NUTRITION -->
+  <div class="page" id="page-nutrition">
+    <div class="page-header"><div class="page-title">Nutrition</div><div class="page-sub">Tous les plans alimentaires</div></div>
+    <div id="all-nutrition"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- MODAL : Nouveau client -->
+<div class="modal-overlay" id="modal-add-client">
+  <div class="modal">
+    <div class="modal-title">Nouveau client <span class="close-btn" onclick="closeModal('add-client')">×</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="c-prenom" placeholder="Lucas"/></div>
+      <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="c-nom" placeholder="Martin"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Âge</label><input class="form-input" id="c-age" type="number" placeholder="25"/></div>
+      <div class="form-group"><label class="form-label">Objectif</label>
+        <select class="form-select" id="c-objectif">
+          <option>Prise de masse</option><option>Perte de poids</option><option>Sèche</option><option>Remise en forme</option><option>Performance</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Poids (kg)</label><input class="form-input" id="c-poids" type="number" placeholder="75"/></div>
+      <div class="form-group"><label class="form-label">Taille (cm)</label><input class="form-input" id="c-taille" type="number" placeholder="178"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="c-notes" placeholder="Blessures, contraintes, remarques..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('add-client')">Annuler</button>
+      <button class="btn btn-primary" onclick="addClient()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : Mesure -->
+<div class="modal-overlay" id="modal-add-mesure">
+  <div class="modal">
+    <div class="modal-title">Nouvelle mesure <span class="close-btn" onclick="closeModal('add-mesure')">×</span></div>
+    <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Poids (kg)</label><input class="form-input" id="m-poids" type="number" step="0.1" placeholder="74.5"/></div>
+      <div class="form-group"><label class="form-label">Tour de taille (cm)</label><input class="form-input" id="m-taille-cm" type="number" placeholder="82"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tour de hanches (cm)</label><input class="form-input" id="m-hanches" type="number" placeholder="95"/></div>
+      <div class="form-group"><label class="form-label">Masse grasse (%)</label><input class="form-input" id="m-mg" type="number" step="0.1" placeholder="18"/></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('add-mesure')">Annuler</button>
+      <button class="btn btn-primary" onclick="addMesure()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : Programme -->
+<div class="modal-overlay" id="modal-add-programme">
+  <div class="modal">
+    <div class="modal-title">Nouveau programme <span class="close-btn" onclick="closeModal('add-programme')">×</span></div>
+    <div class="form-group"><label class="form-label">Nom du programme</label><input class="form-input" id="p-nom" placeholder="Programme full body 3j/sem"/></div>
+    <div id="prog-jours">
+      <div class="form-group"><label class="form-label">Jour 1 — Nom</label><input class="form-input prog-jour" placeholder="Lundi - Haut du corps"/></div>
+      <div class="form-group"><label class="form-label">Exercices (un par ligne : Nom — séries x reps)</label><textarea class="form-textarea prog-exos-txt" placeholder="Développé couché — 4x10&#10;Tractions — 3x8&#10;Dips — 3x12"></textarea></div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="addJour()">+ Ajouter un jour</button>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('add-programme')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveProgramme()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : Nutrition -->
+<div class="modal-overlay" id="modal-add-nutrition">
+  <div class="modal">
+    <div class="modal-title">Plan alimentaire <span class="close-btn" onclick="closeModal('add-nutrition')">×</span></div>
+    <div class="form-group"><label class="form-label">Nom du plan</label><input class="form-input" id="n-nom" placeholder="Plan prise de masse"/></div>
+    <div class="form-group"><label class="form-label">Calories totales / jour</label><input class="form-input" id="n-cal" type="number" placeholder="2800"/></div>
+    <div id="repas-list">
+      <div class="form-group"><label class="form-label">Repas 1 — Nom</label><input class="form-input repas-nom" placeholder="Petit-déjeuner"/></div>
+      <div class="form-group"><label class="form-label">Aliments (un par ligne : aliment — quantité)</label><textarea class="form-textarea repas-aliments" placeholder="Flocons d'avoine — 80g&#10;Lait demi-écrémé — 200ml&#10;Banane — 1 pièce"></textarea></div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="addRepas()">+ Ajouter un repas</button>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('add-nutrition')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNutrition()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#c8f65d','#ff6b35','#64b4ff','#ff9de2','#a78bfa','#34d399'];
+
+let clients = [
+  { id:1, prenom:'Sophie', nom:'Dubois', age:28, objectif:'Perte de poids', poids:67, taille:165, notes:'Éviter les exercices au sol', color:'#c8f65d',
+    mesures:[{date:'2024-01-10',poids:68.5,taille:82,hanches:96,mg:24},{date:'2024-02-10',poids:67,taille:80,hanches:94,mg:22.5}],
+    programmes:[{nom:'Cardio & tonique', jours:[{nom:'Lundi - Full body',exos:'Squat goblet — 4x15\nFentes — 3x12\nGainage — 3x45s'},{nom:'Vendredi - Cardio',exos:'HIIT 20min\nCorde à sauter — 3x3min'}]}],
+    nutrition:[{nom:'Déficit calorique', cal:1800, repas:[{nom:'Matin',aliments:'Yaourt grec — 200g\nFruites rouges — 100g\nNoix — 20g'},{nom:'Déjeuner',aliments:'Poulet grillé — 150g\nRiz complet — 80g\nSalade verte — qsp'}]}]
+  },
+  { id:2, prenom:'Marc', nom:'Lefort', age:35, objectif:'Prise de masse', poids:78, taille:182, notes:'Épaule gauche fragile', color:'#ff6b35',
+    mesures:[{date:'2024-01-05',poids:76,taille:88,hanches:98,mg:18},{date:'2024-02-05',poids:78,taille:87,hanches:97,mg:17.5}],
+    programmes:[{nom:'Push Pull Legs', jours:[{nom:'Lundi - Push',exos:'Développé couché — 5x5\nDéveloppé militaire — 4x8\nDips — 3x12'},{nom:'Mercredi - Pull',exos:'Tractions — 4x6\nRow barre — 4x10\nCurl biceps — 3x12'},{nom:'Vendredi - Legs',exos:'Squat barre — 5x5\nSoulevé de terre — 4x6\nPresse — 3x15'}]}],
+    nutrition:[{nom:'Surplus calorique', cal:3200, repas:[{nom:'Matin',aliments:'Flocons avoine — 100g\nWhey protein — 30g\nBanane — 1\nLait — 300ml'},{nom:'Post training',aliments:'Riz blanc — 150g\nPoulet — 200g\nLégumes — qsp'}]}]
+  }
+];
+
+let currentClientId = null;
+
+function getClient(id) { return clients.find(c => c.id == id); }
+function initials(c) { return (c.prenom[0]+c.nom[0]).toUpperCase(); }
+
+function renderClientCard(c) {
+  const lastMesure = c.mesures[c.mesures.length-1];
+  const tag = c.objectif === 'Prise de masse' ? 'tag-orange' : c.objectif === 'Perte de poids' ? 'tag-green' : 'tag-blue';
+  return `<div class="client-card" onclick="openClient(${c.id})">
+    <div class="client-top">
+      <div class="avatar" style="background:${c.color}20;color:${c.color}">${initials(c)}</div>
+      <div><div class="client-name">${c.prenom} ${c.nom}</div><div class="client-goal">${c.age} ans • ${c.taille} cm</div></div>
+    </div>
+    <div class="client-metrics">
+      <div class="metric"><div class="metric-val">${lastMesure ? lastMesure.poids+'kg' : c.poids+'kg'}</div><div class="metric-lbl">Poids</div></div>
+      <div class="metric"><div class="metric-val">${c.mesures.length}</div><div class="metric-lbl">Mesures</div></div>
+    </div>
+    <span class="tag ${tag}">${c.objectif}</span>
+  </div>`;
+}
+
+function renderAll() {
+  const totalProg = clients.reduce((s,c) => s + c.programmes.length, 0);
+  const totalNut = clients.reduce((s,c) => s + c.nutrition.length, 0);
+  const totalMes = clients.reduce((s,c) => s + c.mesures.length, 0);
+  document.getElementById('stat-clients').textContent = clients.length;
+  document.getElementById('stat-programmes').textContent = totalProg;
+  document.getElementById('stat-nutrition').textContent = totalNut;
+  document.getElementById('stat-mesures').textContent = totalMes;
+  document.getElementById('clients-list').innerHTML = clients.map(renderClientCard).join('') || '<div class="empty"><div class="empty-icon">◎</div><div class="empty-text">Aucun client pour l\'instant</div></div>';
+  document.getElementById('dashboard-clients').innerHTML = clients.slice(0,4).map(renderClientCard).join('');
+  renderAllProgrammes();
+  renderAllNutrition();
+}
+
+function renderProgramme(p) {
+  return p.jours.map(j => `
+    <div class="prog-day" onclick="this.classList.toggle('open')">
+      <div class="prog-day-header">
+        <div><div class="prog-day-name">${j.nom}</div><div class="prog-day-sub">${j.exos.split('\n').filter(Boolean).length} exercices</div></div>
+        <span style="color:var(--muted);font-size:12px">▾</span>
+      </div>
+      <div class="prog-exos">
+        ${j.exos.split('\n').filter(Boolean).map((e,idx) => `
+          <div class="exo-row">
+            <div class="exo-num">${idx+1}</div>
+            <div class="exo-name">${e.split('—')[0].trim()}</div>
+            <div class="exo-detail">${e.split('—')[1]?.trim()||''}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderNutrition(n) {
+  return n.repas.map(r => `
+    <div class="repas-card">
+      <div class="repas-header"><div class="repas-name">${r.nom}</div></div>
+      <ul class="aliment-list">
+        ${r.aliments.split('\n').filter(Boolean).map(a => `<li><span>${a.split('—')[0].trim()}</span><span class="aliment-qty">${a.split('—')[1]?.trim()||''}</span></li>`).join('')}
+      </ul>
+    </div>`).join('');
+}
+
+function renderAllProgrammes() {
+  let html = '';
+  clients.forEach(c => {
+    c.programmes.forEach(p => {
+      html += `<div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;background:${c.color}20;color:${c.color}">${initials(c)}</div>
+          <div><div style="font-weight:600;font-size:14px">${p.nom}</div><div style="font-size:12px;color:var(--muted)">${c.prenom} ${c.nom}</div></div>
+        </div>${renderProgramme(p)}</div>`;
+    });
+  });
+  document.getElementById('all-programmes').innerHTML = html || '<div class="empty"><div class="empty-icon">◈</div><div class="empty-text">Aucun programme créé</div></div>';
+}
+
+function renderAllNutrition() {
+  let html = '';
+  clients.forEach(c => {
+    c.nutrition.forEach(n => {
+      html += `<div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;background:${c.color}20;color:${c.color}">${initials(c)}</div>
+          <div><div style="font-weight:600;font-size:14px">${n.nom} <span style="font-size:12px;color:var(--accent)">${n.cal} kcal/j</span></div><div style="font-size:12px;color:var(--muted)">${c.prenom} ${c.nom}</div></div>
+        </div>${renderNutrition(n)}</div>`;
+    });
+  });
+  document.getElementById('all-nutrition').innerHTML = html || '<div class="empty"><div class="empty-icon">◇</div><div class="empty-text">Aucun plan créé</div></div>';
+}
+
+function openClient(id) {
+  currentClientId = id;
+  const c = getClient(id);
+  document.getElementById('detail-header').innerHTML = `
+    <div class="detail-avatar" style="background:${c.color}20;color:${c.color}">${initials(c)}</div>
+    <div>
+      <div class="detail-name">${c.prenom} ${c.nom}</div>
+      <div class="detail-info">${c.age} ans • ${c.taille} cm • ${c.poids} kg • ${c.objectif}</div>
+      ${c.notes ? `<div style="margin-top:6px;font-size:12px;color:var(--muted)">📝 ${c.notes}</div>` : ''}
+    </div>`;
+  renderClientDetail(c);
+  showPage('client-detail');
+}
+
+function renderClientDetail(c) {
+  const tbody = document.getElementById('mesures-body');
+  tbody.innerHTML = c.mesures.length ? c.mesures.map((m,i) => {
+    const prev = c.mesures[i-1];
+    const delta = prev ? (m.poids - prev.poids).toFixed(1) : null;
+    const cls = delta ? (parseFloat(delta) < 0 ? 'delta-up' : 'delta-down') : '';
+    return `<tr>
+      <td>${new Date(m.date).toLocaleDateString('fr-FR')}</td>
+      <td><strong>${m.poids} kg</strong></td>
+      <td>${m.taille||'—'} cm</td>
+      <td>${m.hanches||'—'} cm</td>
+      <td>${m.mg||'—'}%</td>
+      <td>${delta ? `<span class="delta ${cls}">${parseFloat(delta)>0?'+':''}${delta} kg</span>` : '—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Aucune mesure enregistrée</td></tr>';
+
+  document.getElementById('programme-content').innerHTML = c.programmes.length
+    ? c.programmes.map(p => `<div style="margin-bottom:20px"><div style="font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:12px">${p.nom}</div>${renderProgramme(p)}</div>`).join('')
+    : '<div class="empty"><div class="empty-icon">💪</div><div class="empty-text">Aucun programme assigné</div></div>';
+
+  document.getElementById('nutrition-content').innerHTML = c.nutrition.length
+    ? c.nutrition.map(n => `<div style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-family:var(--font-head);font-size:15px;font-weight:700">${n.nom}</div><span style="font-size:13px;color:var(--accent)">${n.cal} kcal/jour</span></div>${renderNutrition(n)}</div>`).join('')
+    : '<div class="empty"><div class="empty-icon">🥗</div><div class="empty-text">Aucun plan alimentaire assigné</div></div>';
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const map = {dashboard:0, clients:1, programmes:2, nutrition:3};
+  if (map[name] !== undefined) document.querySelectorAll('.nav-item')[map[name]].classList.add('active');
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const idx = {mesures:0, programme:1, nutrition:2}[name];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+function openModal(name) {
+  if (name === 'add-mesure') document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modal-'+name).classList.add('open');
+}
+function closeModal(name) { document.getElementById('modal-'+name).classList.remove('open'); }
+
+function addClient() {
+  const prenom = document.getElementById('c-prenom').value.trim();
+  const nom = document.getElementById('c-nom').value.trim();
+  if (!prenom || !nom) { alert('Prénom et nom obligatoires'); return; }
+  clients.push({
+    id: Date.now(), prenom, nom,
+    age: parseInt(document.getElementById('c-age').value)||0,
+    objectif: document.getElementById('c-objectif').value,
+    poids: parseFloat(document.getElementById('c-poids').value)||0,
+    taille: parseInt(document.getElementById('c-taille').value)||0,
+    notes: document.getElementById('c-notes').value,
+    color: COLORS[clients.length % COLORS.length],
+    mesures: [], programmes: [], nutrition: []
+  });
+  ['c-prenom','c-nom','c-age','c-poids','c-taille','c-notes'].forEach(id => document.getElementById(id).value = '');
+  closeModal('add-client');
+  renderAll();
+}
+
+function addMesure() {
+  const c = getClient(currentClientId);
+  c.mesures.push({
+    date: document.getElementById('m-date').value,
+    poids: parseFloat(document.getElementById('m-poids').value)||0,
+    taille: parseInt(document.getElementById('m-taille-cm').value)||0,
+    hanches: parseInt(document.getElementById('m-hanches').value)||0,
+    mg: parseFloat(document.getElementById('m-mg').value)||0
+  });
+  ['m-poids','m-taille-cm','m-hanches','m-mg'].forEach(id => document.getElementById(id).value = '');
+  closeModal('add-mesure');
+  renderClientDetail(c);
+  renderAll();
+}
+
+function addJour() {
+  const d = document.getElementById('prog-jours');
+  const idx = d.querySelectorAll('.prog-jour').length + 1;
+  const div = document.createElement('div');
+  div.innerHTML = `<div class="form-group"><label class="form-label">Jour ${idx} — Nom</label><input class="form-input prog-jour" placeholder="Mercredi - Bas du corps"/></div>
+    <div class="form-group"><label class="form-label">Exercices</label><textarea class="form-textarea prog-exos-txt" placeholder="Squat — 4x10&#10;Presse — 3x15"></textarea></div>`;
+  d.appendChild(div);
+}
+
+function saveProgramme() {
+  const c = getClient(currentClientId);
+  const nom = document.getElementById('p-nom').value.trim() || 'Programme';
+  const jours = [];
+  document.querySelectorAll('.prog-jour').forEach((j,i) => {
+    jours.push({ nom: j.value||`Jour ${i+1}`, exos: document.querySelectorAll('.prog-exos-txt')[i]?.value||'' });
+  });
+  c.programmes.push({ nom, jours });
+  document.getElementById('p-nom').value = '';
+  document.getElementById('prog-jours').innerHTML = `<div class="form-group"><label class="form-label">Jour 1 — Nom</label><input class="form-input prog-jour" placeholder="Lundi - Haut du corps"/></div>
+    <div class="form-group"><label class="form-label">Exercices (un par ligne : Nom — séries x reps)</label><textarea class="form-textarea prog-exos-txt" placeholder="Développé couché — 4x10&#10;Tractions — 3x8"></textarea></div>`;
+  closeModal('add-programme');
+  renderClientDetail(c);
+  renderAll();
+}
+
+function addRepas() {
+  const d = document.getElementById('repas-list');
+  const idx = d.querySelectorAll('.repas-nom').length + 1;
+  const div = document.createElement('div');
+  div.innerHTML = `<div class="form-group"><label class="form-label">Repas ${idx} — Nom</label><input class="form-input repas-nom" placeholder="Dîner"/></div>
+    <div class="form-group"><label class="form-label">Aliments</label><textarea class="form-textarea repas-aliments" placeholder="Saumon — 180g&#10;Pomme de terre — 200g"></textarea></div>`;
+  d.appendChild(div);
+}
+
+function saveNutrition() {
+  const c = getClient(currentClientId);
+  const nom = document.getElementById('n-nom').value.trim() || 'Plan alimentaire';
+  const cal = parseInt(document.getElementById('n-cal').value)||0;
+  const repas = [];
+  document.querySelectorAll('.repas-nom').forEach((n,i) => {
+    repas.push({ nom: n.value||`Repas ${i+1}`, aliments: document.querySelectorAll('.repas-aliments')[i]?.value||'' });
+  });
+  c.nutrition.push({ nom, cal, repas });
+  document.getElementById('n-nom').value = '';
+  document.getElementById('n-cal').value = '';
+  document.getElementById('repas-list').innerHTML = `<div class="form-group"><label class="form-label">Repas 1 — Nom</label><input class="form-input repas-nom" placeholder="Petit-déjeuner"/></div>
+    <div class="form-group"><label class="form-label">Aliments</label><textarea class="form-textarea repas-aliments" placeholder="Flocons d'avoine — 80g&#10;Lait — 200ml"></textarea></div>`;
+  closeModal('add-nutrition');
+  renderClientDetail(c);
+  renderAll();
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); }));
+
+renderAll();
+</script>
+</body>
+</html>
